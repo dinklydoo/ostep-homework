@@ -1,0 +1,8 @@
+4. SJF same turnaround as FIFO if, process length is sequentially increasing or process length is equal
+5. SJF same response time as RR if, process length is strictly sequentially decreasing (no equal lengths)
+6. SJF response time if processes increase in length => same as FIFO
+7. If quantum length increases in RR, response time increases. Given N jobs worst case response time is (N*qL)
+
+           process F added at start of process A time slice (wait for N processes of length qL)
+CYCLE X :       |
+    PROCESSES : A, B, C, D, E, (F)
