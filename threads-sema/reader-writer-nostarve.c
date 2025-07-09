@@ -7,23 +7,69 @@
 // Your code goes in the structure and functions below
 //
 
+// queue like structure?
+
 typedef struct __rwlock_t {
+    int writers;
+    int readers;
+    my_sem_t lock;
+    my_sem_t writerlock;
+    my_sem_t readerlock;
 } rwlock_t;
 
 
 void rwlock_init(rwlock_t *rw) {
+    my_sem_t(&rw->lock, 0, 1);
+    // reader and writer lock juggles the value between basically two cond vars
+    // can alternate read/write cycles
+    my_sem_t(&rw->writerlock, 0, 1);
+    my_sem_t(&rw->readerlock, 0, 0);
+    rw->writers = 0;
+    rw->readers = 0;
 }
 
 void rwlock_acquire_readlock(rwlock_t *rw) {
+    my_sem_wait(&rw->lock);
+    rw->readers++;
+    if (rw->readers == 1){ // first reader
+
+        // ideally check the return value of sem_wait on linux but my sem always returns 0 :)
+        if (rw->writers == 0 && (&rw->readerlock)->value == -1){
+            my_sem_wait(&rw->writerlock);
+            my_sem_post(&rw->readerlock);
+        }
+        my_sem_wait(&rw->readerlock);
+    }
+    my_sem_post(&rw->lock);
 }
 
 void rwlock_release_readlock(rwlock_t *rw) {
+    my_sem_wait(&rw->lock);
+    rw->readers--;
+    if (rw->writers > 0){
+        my_sem_post(&rw->writerlock);
+    }
+    else my_sem_post(&rw->readerlock);
+    my_sem_post(&rw->lock);
 }
 
 void rwlock_acquire_writelock(rwlock_t *rw) {
+    my_sem_wait(&rw->lock);
+    rw->writers++;
+    if (rw->writers == 1){
+        my_sem_wait(&rw->writerlock);
+    }
+    my_sem_post(&rw->lock);
 }
 
 void rwlock_release_writelock(rwlock_t *rw) {
+    my_sem_wait(&rw->lock);
+    rw->writers--;
+    if (rw->readers > 0){
+        my_sem_post(&rw->readlock);
+    }
+    else my_sem_post(&rw->writelock);
+    my_sem_post(&rw->lock);
 }
 
 //
