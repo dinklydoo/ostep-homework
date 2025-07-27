@@ -12,8 +12,16 @@
 // You likely need two semaphores to do this correctly, and some
 // other integers to track things.
 
+// two possible ways to do this
+
+// concurrent counter with int and two semaphores (1 lock)
+// one semaphore of value (1-N)
+
 typedef struct __barrier_t {
-    // add semaphores and other information here
+    my_sem_t lock;
+    my_sem_t exec;
+    int count;
+    int num_threads;
 } barrier_t;
 
 
@@ -21,11 +29,23 @@ typedef struct __barrier_t {
 barrier_t b;
 
 void barrier_init(barrier_t *b, int num_threads) {
-    // initialization code goes here
+    my_sem_init(&b->lock, 0, 1);
+    my_sem_init(&b->exec, 0, 0);
+    b->count = 0;
+    b->num_threads = num_threads;
 }
 
 void barrier(barrier_t *b) {
     // barrier code goes here
+    my_sem_wait(&b->lock);
+    b->count++;
+    my_sem_post(&b->lock);
+
+    if (b->count == b->num_threads){
+        my_sem_post(&b->exec);
+    }
+    my_sem_wait(&b->exec);
+    my_sem_post(&b->exec);
 }
 
 //
